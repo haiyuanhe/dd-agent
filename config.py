@@ -352,7 +352,7 @@ def remove_empty(string_array):
     return filter(lambda x: x, string_array)
 
 
-def get_config(parse_args=True, cfg_path=None, options=None, can_query_registry=True, allow_invalid_api_key=False):
+def get_config(parse_args=True, cfg_path=None, options=None, can_query_registry=True, allow_invalid_api_key=True):
     if parse_args:
         options, _ = get_parsed_args()
 

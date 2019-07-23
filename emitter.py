@@ -101,6 +101,7 @@ def post_payload(url, message, serialize_func, agentConfig, log):
     for payload in payloads:
         try:
             headers = get_post_headers(agentConfig, payload)
+            headers['uuid'] = agentConfig['uuid']
             r = requests.post(url, data=payload, timeout=5, headers=headers)
 
             r.raise_for_status()

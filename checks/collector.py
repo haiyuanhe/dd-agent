@@ -658,7 +658,7 @@ class Collector(object):
         payload['service_checks'] = []
         payload['resources'] = {}
         payload['internalHostname'] = self.hostname
-        payload['uuid'] = get_uuid()
+        payload['uuid'] = self.agentConfig['uuid']
         payload['host-tags'] = {}
         payload['external_host_tags'] = {}
 
