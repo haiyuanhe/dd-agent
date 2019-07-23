@@ -1,0 +1,7 @@
+init_config:
+
+instances:
+  ## @param N - int - required
+  ## The max process
+  #
+  - N: 20

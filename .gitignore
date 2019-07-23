@@ -3,7 +3,6 @@ Gemfile.lock
 *.pyc
 *.*~
 build/*
-datadog.conf
 datadog_agent.egg-info/*
 artifacts/*
 node_modules/*
@@ -25,8 +24,6 @@ dist/*
 *.exe
 nosetests*.xml
 stats.dat
-conf.d/*.yaml
-!conf.d/network.yaml
 packaging/build/
 packaging/root/
 Vagrantfile
@@ -43,5 +40,3 @@ tests/core/fixtures/flare/dd*
 .idea
 tags
 
-checks.d
-conf.d
