@@ -3,8 +3,10 @@
 from __future__ import division
 
 from time import localtime, strftime
+
 try:
     import psutil
+    import urlparse
 except ImportError:
     psutil = None
 import requests
@@ -55,7 +57,8 @@ class HostTopn(AgentCheck):
             payload["token"] = self.api_key
         else:
             payload = {'token': self.api_key}
-        req = requests.post('%s%s' % (metrics_server, url), params=payload, json=data, headers=headers, cookies=cookies, timeout=20, verify=(not self.skip_ssl_validation))
+        req = requests.post(urlparse.urljoin(metrics_server, url), params=payload, json=data, headers=headers,
+                            cookies=cookies, timeout=20, verify=(not self.skip_ssl_validation))
         return req
 
     def cal_disk_io_rate(self, cur_processes):
@@ -68,8 +71,10 @@ class HostTopn(AgentCheck):
                         pre_proc = self.preprocess[pid]
                         if pre_proc is not None:
                             try:
-                                cur_proc['diskIoRead'] = (cur_proc['disk_io_read'] - pre_proc['disk_io_read']) / self.interval
-                                cur_proc['diskIoWrite'] = (cur_proc['disk_io_write'] - pre_proc['disk_io_write'])/ self.interval
+                                cur_proc['diskIoRead'] = (cur_proc['disk_io_read'] - pre_proc[
+                                    'disk_io_read']) / self.interval
+                                cur_proc['diskIoWrite'] = (cur_proc['disk_io_write'] - pre_proc[
+                                    'disk_io_write']) / self.interval
                             except:
                                 pass
                     else:
@@ -105,18 +110,15 @@ class HostTopn(AgentCheck):
                            reverse=True)
         return processes
 
-
     def get_host_state(self, processes, start_time):
         if len(processes) <= 0:
             return
         host_state = {}
-        # host_state['ip'] = self.ip
-        host_state['ip'] = '192.168.1.143'
+        host_state['ip'] = self.ip
         host_state['version'] = ''
         host_state['commit'] = ''
         host_state['startTime'] = start_time
-        # host_state['host'] = self.hostname
-        host_state['host'] = 'WIN-AV2OO2MICPO'
+        host_state['host'] = self.hostname
         host_state['key'] = host_state['ip'] + '_' + host_state['host']
         host_state['processes'] = processes
         host_state['processes_size'] = len(processes)
@@ -125,7 +127,7 @@ class HostTopn(AgentCheck):
 
     def get_processes(self, procs):
         processes = {}
-        for i,proc in enumerate(procs):
+        for i, proc in enumerate(procs):
             try:
                 process = {}
                 process['pid'] = proc.dict['pid']
