@@ -513,6 +513,7 @@ def main():
         'restart',
         'status',
         'foreground',
+        'reload',
     ]
 
     COMMANDS_NO_AGENT = [
@@ -627,6 +628,8 @@ def main():
             f.upload()
         except Exception as e:
             print 'The upload failed:\n{0}'.format(str(e))
+    elif 'reload' == command:
+        agent.reload()
 
     return 0
 

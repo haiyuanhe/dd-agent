@@ -1261,6 +1261,14 @@ def load_check_directory(agentConfig, hostname):
         if not conf_is_valid:
             continue
 
+        if check_config is not None:
+            if check_config.get('init_config') is None:
+                continue
+            else:
+                if not check_config.get('init_config').get('enable'):
+                    continue
+
+
         if agentConfig.get(TRACE_CONFIG):
             configs_and_sources[check_name] = (CONFIG_FROM_FILE, check_config)
 
