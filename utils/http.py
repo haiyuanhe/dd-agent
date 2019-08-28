@@ -6,6 +6,36 @@ import requests
 
 
 DEFAULT_TIMEOUT = 10
+# If we're running as root and this user exists, we'll drop privileges.
+USER = "cwiz-user"
+
+
+class RevertibleLowPrivilegeUser(object):
+    def __init__(self, low_privelege_user, logger):
+        self.low_privilege_user = low_privelege_user
+        self.logger = logger
+
+    def __enter__(self):
+        pass
+#        if os.geteuid() != 0:
+#            return
+#        try:
+#            ent = pwd.getpwnam(self.low_privilege_user)
+#        except KeyError:
+#            return
+
+#        self.logger.info("set to lower-privilege user %s", self.low_privilege_user)
+#        os.setegid(ent.pw_gid)
+#        os.seteuid(ent.pw_uid)
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        pass
+#       self.logger.info("revert. set current euser %s back to %s", os.geteuid(), os.getuid())
+#       os.seteuid(os.getuid())
+
+
+def lower_privileges(logger, user=USER):
+    return RevertibleLowPrivilegeUser(user, logger)
 
 
 def retrieve_json(url, timeout=DEFAULT_TIMEOUT, verify=True):
@@ -24,3 +54,17 @@ def get_expvar_stats(key, host="localhost", port=5000):
         return json.get(key)
 
     return json
+
+
+def alertd_post_sender(url, data, payload={}, token=None, skip_ssl_validation=True):
+    headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
+
+    cookies = dict(_token=token)
+    # print '%s%s?token=%s' % (metrics_server, url, token)
+    if len(payload):
+        payload["token"] = token
+    else:
+        payload = {'token': token}
+    req = requests.post(url, params=payload, json=data, headers=headers, cookies=cookies,
+                        timeout=20, verify=(not skip_ssl_validation))
+    return req
