@@ -1,0 +1,6 @@
+init_config:
+  min_collection_interval: 300
+
+instances:
+  - port: 16010
+    host: 192.168.1.221

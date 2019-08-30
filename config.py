@@ -1239,6 +1239,7 @@ def load_check_directory(agentConfig, hostname):
     init_failed_checks = {}
     deprecated_checks = {}
     agentConfig['checksd_hostname'] = hostname
+    agentConfig['ip'] = gethostbyname(hostname)
     osname = get_os()
 
     # the TRACE_CONFIG flag is used by the configcheck to trace config object loading and

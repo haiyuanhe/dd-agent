@@ -3,13 +3,8 @@
 from __future__ import division
 
 from time import localtime, strftime
-
-try:
-    import psutil
-    import urlparse
-except ImportError:
-    psutil = None
-import requests
+import psutil
+from utils import http
 
 from datadog_checks.base import AgentCheck
 
@@ -20,7 +15,7 @@ class HostTopn(AgentCheck):
         AgentCheck.__init__(self, name, init_config, agentConfig, instances)
         self.alertd_url = agentConfig.get('alertd_url', '')
         self.ip = agentConfig.get('ip', '')
-        self.hostname = agentConfig.get('hostname', '')
+        self.hostname = agentConfig.get('checksd_hostname', '')
         self.skip_ssl_validation = agentConfig.get('skip_ssl_validation', False)
         self.api_key = agentConfig.get('api_key', '')
         self.preprocess = None
@@ -41,25 +36,12 @@ class HostTopn(AgentCheck):
                 return
             host_state = self.get_host_state(processes, start_time)
             try:
-                self.alertd_post_sender("/host/state", host_state)
+                http.alertd_post_sender("%s%s" % (self.alertd_url, "/host/state"), host_state, token=self.api_key, skip_ssl_validation=self.skip_ssl_validation)
+                self.send_opentsdb(sorted_procs, tags=custom_tags)
                 self.gauge("topn.state", 0)
             except Exception as e:
                 self.log.error("can't send host state result to alertd %s" % e)
                 self.gauge("topn.state", 1)
-
-    def alertd_post_sender(self, url, data, payload={}, token=None):
-        headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
-        metrics_server = self.alertd_url
-
-        cookies = dict(_token=self.api_key)
-        # print '%s%s?token=%s' % (metrics_server, url, token)
-        if len(payload):
-            payload["token"] = self.api_key
-        else:
-            payload = {'token': self.api_key}
-        req = requests.post(urlparse.urljoin(metrics_server, url), params=payload, json=data, headers=headers,
-                            cookies=cookies, timeout=20, verify=(not self.skip_ssl_validation))
-        return req
 
     def cal_disk_io_rate(self, cur_processes):
         processes = []
@@ -71,10 +53,8 @@ class HostTopn(AgentCheck):
                         pre_proc = self.preprocess[pid]
                         if pre_proc is not None:
                             try:
-                                cur_proc['diskIoRead'] = (cur_proc['disk_io_read'] - pre_proc[
-                                    'disk_io_read']) / self.interval
-                                cur_proc['diskIoWrite'] = (cur_proc['disk_io_write'] - pre_proc[
-                                    'disk_io_write']) / self.interval
+                                cur_proc['diskIoRead'] = (cur_proc['disk_io_read'] - pre_proc['disk_io_read']) / self.interval
+                                cur_proc['diskIoWrite'] = (cur_proc['disk_io_write'] - pre_proc['disk_io_write'])/ self.interval
                             except:
                                 pass
                     else:
@@ -110,6 +90,13 @@ class HostTopn(AgentCheck):
                            reverse=True)
         return processes
 
+    def send_opentsdb(self, processes, tags=None):
+        for i,proc in enumerate(processes):
+            if i > self.N:
+                break
+            self.gauge("cpu.topN", float(proc.dict['cpu_percent'] / self.cpu_count), tags + ['pid:%s' % proc.dict['pid']])
+            self.gauge("mem.topN", float(proc.dict['memory_percent']),  tags + ['pid:%s' % proc.dict['pid']])
+
     def get_host_state(self, processes, start_time):
         if len(processes) <= 0:
             return
@@ -127,7 +114,7 @@ class HostTopn(AgentCheck):
 
     def get_processes(self, procs):
         processes = {}
-        for i, proc in enumerate(procs):
+        for i,proc in enumerate(procs):
             try:
                 process = {}
                 process['pid'] = proc.dict['pid']
@@ -135,11 +122,7 @@ class HostTopn(AgentCheck):
                 process['command'] = proc.dict['command']
                 process['user'] = proc.dict['username']
                 process['memPercent'] = proc.dict['memory_percent']
-                try:
-                    process['cpuPercent'] = proc.dict['cpu_percent'] / self.cpu_count
-                except:
-                    process['cpuPercent'] = ""
-                    self.log.debug("Can't get cpu usage")
+                process['cpuPercent'] = proc.dict['cpu_percent'] / self.cpu_count
                 process['createTime'] = int(round(proc.dict['create_time']))
                 try:
                     # in macos it doesn't work. in win and linux is work
