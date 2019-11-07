@@ -1,0 +1,5 @@
+init_config:
+
+instances:
+  - stats_urls:
+      - "http://localhost:9999/stats.txt"

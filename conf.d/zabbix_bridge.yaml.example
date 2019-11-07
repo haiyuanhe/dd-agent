@@ -1,0 +1,6 @@
+init_config:
+
+instances:
+  - info: {"host": "172.16.251.1", "port": 3306, "user": "root", "passwd": "root", "db": "zabbix" }
+  - database: mysql
+  - config_path: /opt/cloudwiz-agent/agent/local_config/collectors/zabbix_bridge/zabbix_map.yaml

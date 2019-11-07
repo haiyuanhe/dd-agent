@@ -1,0 +1,5 @@
+init_config:
+
+instances:
+  - interval: 30
+  - metric_data_file: metric_data_file
